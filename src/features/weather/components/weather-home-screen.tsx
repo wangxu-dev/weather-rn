@@ -1,8 +1,11 @@
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { SymbolView } from 'expo-symbols';
+import { Button as SwiftUIButton, ControlGroup, Host } from '@expo/ui/swift-ui';
+import { buttonStyle, controlSize, labelStyle } from '@expo/ui/swift-ui/modifiers';
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInRight, LinearTransition } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -20,6 +23,7 @@ import { useTranslation } from '@/shared/i18n/use-translation';
 import type { TranslationKey } from '@/shared/i18n/translations';
 import { useAppTheme } from '@/shared/theme/use-app-theme';
 import type { AppThemeTokens } from '@/shared/theme/tokens';
+import { GlassGroup, GlassSurface } from '@/shared/ui/glass-surface';
 import { useAppStore } from '@/store/app-store';
 
 export function WeatherHomeScreen() {
@@ -27,7 +31,7 @@ export function WeatherHomeScreen() {
   const toggleCity = useAppStore((state) => state.toggleCity);
   const weatherQuery = useWeatherSnapshot(city);
   const { t } = useTranslation();
-  const { tokens } = useAppTheme();
+  const { tokens, themeName } = useAppTheme();
   const styles = createStyles(tokens);
 
   useBootstrapLocation();
@@ -39,9 +43,7 @@ export function WeatherHomeScreen() {
 
   if (weatherQuery.isPending) {
     return (
-      <LinearGradient
-        colors={[tokens.colors.backgroundTop, tokens.colors.backgroundBottom]}
-        style={styles.container}>
+      <WeatherBackdrop tokens={tokens}>
         <SafeAreaView style={styles.safeArea}>
           <Animated.View
             entering={FadeInDown.duration(motion.duration.slow).easing(motion.easing.standard)}
@@ -50,27 +52,25 @@ export function WeatherHomeScreen() {
             <Text style={styles.stateCopy}>{t('loadingTitle')}</Text>
           </Animated.View>
         </SafeAreaView>
-      </LinearGradient>
+      </WeatherBackdrop>
     );
   }
 
   if (weatherQuery.isError || !weatherQuery.data) {
     return (
-      <LinearGradient
-        colors={[tokens.colors.backgroundTop, tokens.colors.backgroundBottom]}
-        style={styles.container}>
+      <WeatherBackdrop tokens={tokens}>
         <SafeAreaView style={styles.safeArea}>
           <Animated.View
             entering={FadeInDown.duration(motion.duration.slow).easing(motion.easing.standard)}
             style={styles.stateContainer}>
             <Text style={styles.stateTitle}>{t('errorTitle')}</Text>
             <Text style={styles.stateCopy}>{t('errorCopy')}</Text>
-            <Pressable onPress={() => weatherQuery.refetch()} style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>{t('retry')}</Text>
+            <Pressable onPress={() => weatherQuery.refetch()} style={styles.inlineButton}>
+              <Text style={styles.inlineButtonText}>{t('retry')}</Text>
             </Pressable>
           </Animated.View>
         </SafeAreaView>
-      </LinearGradient>
+      </WeatherBackdrop>
     );
   }
 
@@ -86,20 +86,29 @@ export function WeatherHomeScreen() {
     t,
   });
 
-  return (
-    <LinearGradient
-      colors={[tokens.colors.backgroundTop, tokens.colors.backgroundBottom]}
-      style={styles.container}>
-      <View pointerEvents="none" style={styles.skyGlowLarge} />
-      <View pointerEvents="none" style={styles.skyGlowSmall} />
+  const primaryMetrics = [
+    { label: t('feelsLike'), value: `${Math.round(snapshot.current.apparentTemperature)}°` },
+    { label: t('wind'), value: `${windCompass} ${Math.round(snapshot.current.windSpeed)} km/h` },
+    { label: t('humidity'), value: `${Math.round(snapshot.current.humidity)}%` },
+    { label: t('rain'), value: `${Math.round(snapshot.current.precipitationProbability)}%` },
+  ];
 
+  const details = [
+    { label: t('pressure'), value: `${Math.round(snapshot.current.pressure)} hPa` },
+    { label: t('uvIndex'), value: `${Math.round(snapshot.current.uvIndex)}` },
+    { label: t('sunrise'), value: formatClockTime(today.sunrise) },
+    { label: t('sunset'), value: formatClockTime(today.sunset) },
+  ];
+
+  return (
+    <WeatherBackdrop tokens={tokens}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Animated.View
             entering={FadeInDown.duration(motion.duration.slow).easing(motion.easing.standard)}
             layout={LinearTransition}
-            style={styles.topBar}>
-            <View style={styles.topBarLeading}>
+            style={styles.headerRow}>
+            <View style={styles.headerCopy}>
               <Text style={styles.brand}>{t('brand')}</Text>
               <View style={styles.cityRow}>
                 <Text style={styles.city}>{snapshot.city.name}</Text>
@@ -107,60 +116,71 @@ export function WeatherHomeScreen() {
               </View>
             </View>
 
-            <View style={styles.topBarActions}>
-              <Pressable onPress={() => router.push('/settings')} style={styles.secondaryButton}>
-                <Text style={styles.secondaryButtonText}>{t('settings')}</Text>
-              </Pressable>
-              <Pressable onPress={handleToggleCity} style={styles.primaryButton}>
-                <Text style={styles.primaryButtonText}>{t('changeCity')}</Text>
-              </Pressable>
-            </View>
+            <TopControls
+              styles={styles}
+              themeName={themeName}
+              tokens={tokens}
+              searchLabel={t('search')}
+              addLabel={t('changeCity')}
+              settingsLabel={t('settings')}
+              onSearchPress={() => router.push('/search')}
+              onAddPress={handleToggleCity}
+              onSettingsPress={() => router.push('/settings')}
+            />
           </Animated.View>
 
           <Animated.View
-            entering={FadeInDown.delay(60).duration(motion.duration.slow).easing(motion.easing.standard)}
-            layout={LinearTransition}
+            entering={FadeInDown.delay(50).duration(motion.duration.slow).easing(motion.easing.standard)}
             style={styles.hero}>
+            <View style={styles.heroMetaRow}>
+              <Text style={styles.heroEyebrow}>{t('currentConditions')}</Text>
+              <Text style={styles.heroMetaText}>{formatWeekday(today.date)}</Text>
+            </View>
+
             <View style={styles.heroMain}>
-              <Text style={styles.temperature}>{Math.round(snapshot.current.temperature)}°</Text>
-              <View style={styles.heroMeta}>
+              <View style={styles.heroPrimary}>
+                <Text style={styles.temperature}>{Math.round(snapshot.current.temperature)}°</Text>
                 <Text style={styles.condition}>{weatherLabel}</Text>
-                <Text style={styles.highLow}>
+              </View>
+              <View style={styles.heroSecondary}>
+                <Text style={styles.rangeLabel}>{t('range')}</Text>
+                <Text style={styles.rangeValue}>
                   {Math.round(today.temperatureMin)}° / {Math.round(today.temperatureMax)}°
                 </Text>
               </View>
             </View>
 
-            <View style={styles.heroDivider} />
-
-            <View style={styles.primaryMetricsRow}>
-              <Metric label={t('feelsLike')} value={`${Math.round(snapshot.current.apparentTemperature)}°`} styles={styles} />
-              <Metric label={t('wind')} value={`${windCompass} ${Math.round(snapshot.current.windSpeed)} km/h`} styles={styles} />
-              <Metric label={t('humidity')} value={`${Math.round(snapshot.current.humidity)}%`} styles={styles} />
-              <Metric label={t('rain')} value={`${Math.round(snapshot.current.precipitationProbability)}%`} styles={styles} />
+            <View style={styles.metricsRow}>
+              {primaryMetrics.map((metric) => (
+                <Metric key={metric.label} label={metric.label} value={metric.value} styles={styles} />
+              ))}
             </View>
           </Animated.View>
 
           <Animated.View
             entering={FadeInDown.delay(120).duration(motion.duration.slow).easing(motion.easing.standard)}
-            style={styles.advisoryRow}>
-            <Text style={styles.advisoryLabel}>{t('advisory')}</Text>
+            style={styles.section}>
+            <View style={styles.sectionHeadingRow}>
+              <Text style={styles.sectionTitle}>{t('advisory')}</Text>
+            </View>
             <Text style={styles.advisoryText}>{advisory}</Text>
           </Animated.View>
 
           <Animated.View
-            entering={FadeInDown.delay(180).duration(motion.duration.slow).easing(motion.easing.standard)}
-            style={styles.metricsGrid}>
-            <InfoTile label={t('pressure')} value={`${Math.round(snapshot.current.pressure)} hPa`} styles={styles} />
-            <InfoTile label={t('uvIndex')} value={`${Math.round(snapshot.current.uvIndex)}`} styles={styles} />
-            <InfoTile label={t('sunrise')} value={formatClockTime(today.sunrise)} styles={styles} />
-            <InfoTile label={t('sunset')} value={formatClockTime(today.sunset)} styles={styles} />
+            entering={FadeInDown.delay(160).duration(motion.duration.slow).easing(motion.easing.standard)}
+            style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('currentConditions')}</Text>
+            <View style={styles.detailGrid}>
+              {details.map((item) => (
+                <InfoLine key={item.label} label={item.label} value={item.value} styles={styles} />
+              ))}
+            </View>
           </Animated.View>
 
           <Animated.View
-            entering={FadeInDown.delay(240).duration(motion.duration.slow).easing(motion.easing.standard)}
+            entering={FadeInDown.delay(220).duration(motion.duration.slow).easing(motion.easing.standard)}
             style={styles.section}>
-            <View style={styles.sectionHeader}>
+            <View style={styles.sectionHeadingRow}>
               <Text style={styles.sectionTitle}>{t('nextHours')}</Text>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hourlyRow}>
@@ -168,7 +188,7 @@ export function WeatherHomeScreen() {
                 <Animated.View
                   key={item.time}
                   entering={FadeInRight
-                    .delay(260 + index * motion.stagger)
+                    .delay(200 + index * motion.stagger)
                     .duration(motion.duration.normal)
                     .easing(motion.easing.standard)}
                   style={styles.hourlyItem}>
@@ -182,21 +202,19 @@ export function WeatherHomeScreen() {
           </Animated.View>
 
           <Animated.View
-            entering={FadeInDown.delay(320).duration(motion.duration.slow).easing(motion.easing.standard)}
+            entering={FadeInDown.delay(300).duration(motion.duration.slow).easing(motion.easing.standard)}
             style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{t('weekOutlook')}</Text>
-            </View>
-            <Animated.View layout={LinearTransition} style={styles.weekList}>
+            <Text style={styles.sectionTitle}>{t('weekOutlook')}</Text>
+            <Animated.View layout={LinearTransition}>
               {snapshot.daily.map((item, index) => (
                 <Animated.View
                   key={item.date}
                   entering={FadeInDown
-                    .delay(340 + index * motion.stagger)
+                    .delay(280 + index * motion.stagger)
                     .duration(motion.duration.normal)
                     .easing(motion.easing.standard)}
                   layout={LinearTransition}
-                  style={styles.weekRow}>
+                  style={[styles.weekRow, index === snapshot.daily.length - 1 && styles.weekRowLast]}>
                   <View style={styles.weekLeading}>
                     <Text style={styles.weekDay}>{index === 0 ? t('today') : formatWeekday(item.date)}</Text>
                     <Text style={styles.weekCode}>{t(weatherCodeToKey(item.weatherCode))}</Text>
@@ -210,6 +228,151 @@ export function WeatherHomeScreen() {
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
+    </WeatherBackdrop>
+  );
+}
+
+function IconButton({
+  symbol,
+  onPress,
+  styles,
+  tintColor,
+  themeName,
+  tokens,
+}: {
+  symbol: 'magnifyingglass' | 'plus' | 'gearshape';
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+  tintColor: string;
+  themeName: 'light' | 'dark';
+  tokens: AppThemeTokens;
+}) {
+  return (
+    <GlassSurface
+      colorScheme={themeName}
+      tintColor={tokens.colors.glassTint}
+      borderColor={tokens.colors.glassBorder}
+      fallbackColor={tokens.colors.surfaceSoft}
+      glassEffectStyle="regular"
+      style={styles.iconButtonShell}>
+      <Pressable onPress={onPress} style={styles.iconButton}>
+        <SymbolView
+          name={symbol}
+          size={18}
+          weight="medium"
+          type="hierarchical"
+          tintColor={tintColor}
+        />
+      </Pressable>
+    </GlassSurface>
+  );
+}
+
+function TopControls({
+  styles,
+  themeName,
+  tokens,
+  searchLabel,
+  addLabel,
+  settingsLabel,
+  onSearchPress,
+  onAddPress,
+  onSettingsPress,
+}: {
+  styles: ReturnType<typeof createStyles>;
+  themeName: 'light' | 'dark';
+  tokens: AppThemeTokens;
+  searchLabel: string;
+  addLabel: string;
+  settingsLabel: string;
+  onSearchPress: () => void;
+  onAddPress: () => void;
+  onSettingsPress: () => void;
+}) {
+  if (Platform.OS === 'ios') {
+    return (
+      <Host matchContents colorScheme={themeName} style={styles.swiftUIHost}>
+        <ControlGroup modifiers={[controlSize('small')]}>
+          <SwiftUIButton
+            label={searchLabel}
+            systemImage="magnifyingglass"
+            onPress={onSearchPress}
+            modifiers={[buttonStyle('glass'), labelStyle('iconOnly')]}
+          />
+          <SwiftUIButton
+            label={addLabel}
+            systemImage="plus"
+            onPress={onAddPress}
+            modifiers={[buttonStyle('glass'), labelStyle('iconOnly')]}
+          />
+          <SwiftUIButton
+            label={settingsLabel}
+            systemImage="gearshape"
+            onPress={onSettingsPress}
+            modifiers={[buttonStyle('glass'), labelStyle('iconOnly')]}
+          />
+        </ControlGroup>
+      </Host>
+    );
+  }
+
+  return (
+    <View style={styles.headerActions}>
+      <GlassGroup spacing={16} style={styles.headerActionGroup}>
+        <IconButton
+          symbol="magnifyingglass"
+          onPress={onSearchPress}
+          styles={styles}
+          tintColor={tokens.colors.textPrimary}
+          themeName={themeName}
+          tokens={tokens}
+        />
+        <IconButton
+          symbol="plus"
+          onPress={onAddPress}
+          styles={styles}
+          tintColor={tokens.colors.textPrimary}
+          themeName={themeName}
+          tokens={tokens}
+        />
+        <IconButton
+          symbol="gearshape"
+          onPress={onSettingsPress}
+          styles={styles}
+          tintColor={tokens.colors.textPrimary}
+          themeName={themeName}
+          tokens={tokens}
+        />
+      </GlassGroup>
+    </View>
+  );
+}
+
+function WeatherBackdrop({
+  children,
+  tokens,
+}: {
+  children: React.ReactNode;
+  tokens: AppThemeTokens;
+}) {
+  const styles = createStyles(tokens);
+
+  return (
+    <LinearGradient
+      colors={[tokens.colors.backgroundTop, tokens.colors.backgroundBottom]}
+      start={{ x: 0.1, y: 0 }}
+      end={{ x: 0.8, y: 1 }}
+      style={styles.container}>
+      <View pointerEvents="none" style={styles.skyGlowLarge} />
+      <View pointerEvents="none" style={styles.skyGlowSmall} />
+      <LinearGradient
+        colors={[tokens.colors.backgroundHaze, 'transparent']}
+        start={{ x: 0.1, y: 0 }}
+        end={{ x: 0.9, y: 0.7 }}
+        pointerEvents="none"
+        style={styles.sunHaze}
+      />
+      {children}
     </LinearGradient>
   );
 }
@@ -231,7 +394,7 @@ function Metric({
   );
 }
 
-function InfoTile({
+function InfoLine({
   label,
   value,
   styles,
@@ -241,7 +404,7 @@ function InfoTile({
   styles: ReturnType<typeof createStyles>;
 }) {
   return (
-    <View style={styles.infoTile}>
+    <View style={styles.infoLine}>
       <Text style={styles.infoLabel}>{label}</Text>
       <Text style={styles.infoValue}>{value}</Text>
     </View>
@@ -278,21 +441,29 @@ function createStyles(tokens: AppThemeTokens) {
     },
     skyGlowLarge: {
       position: 'absolute',
-      top: 72,
-      right: -40,
-      width: 220,
-      height: 220,
+      top: 64,
+      right: -18,
+      width: 248,
+      height: 248,
       borderRadius: 999,
       backgroundColor: tokens.colors.orbPrimary,
     },
     skyGlowSmall: {
       position: 'absolute',
-      top: 220,
-      left: -30,
-      width: 120,
-      height: 120,
+      top: 238,
+      left: -42,
+      width: 176,
+      height: 176,
       borderRadius: 999,
       backgroundColor: tokens.colors.orbSecondary,
+    },
+    sunHaze: {
+      position: 'absolute',
+      top: 58,
+      left: 24,
+      width: 240,
+      height: 240,
+      borderRadius: 999,
     },
     content: {
       paddingHorizontal: tokens.spacing.lg,
@@ -317,22 +488,21 @@ function createStyles(tokens: AppThemeTokens) {
       lineHeight: 24,
       maxWidth: 280,
     },
-    topBar: {
+    headerRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       gap: tokens.spacing.md,
     },
-    topBarLeading: {
-      gap: 2,
+    headerCopy: {
       flex: 1,
+      gap: 4,
     },
     brand: {
       color: tokens.colors.textMuted,
       fontSize: 12,
       letterSpacing: 2,
       textTransform: 'uppercase',
-      marginBottom: 6,
     },
     cityRow: {
       flexDirection: 'row',
@@ -343,7 +513,7 @@ function createStyles(tokens: AppThemeTokens) {
       color: tokens.colors.textPrimary,
       fontSize: tokens.typography.city,
       fontWeight: '700',
-      letterSpacing: -1.2,
+      letterSpacing: -1.4,
     },
     locationDot: {
       width: 10,
@@ -352,90 +522,115 @@ function createStyles(tokens: AppThemeTokens) {
       backgroundColor: tokens.colors.accent,
       marginTop: 4,
     },
-    topBarActions: {
+    headerActions: {
       flexDirection: 'row',
-      alignItems: 'center',
+      flexWrap: 'wrap',
+      justifyContent: 'flex-end',
+      paddingTop: 8,
+    },
+    swiftUIHost: {
+      alignSelf: 'flex-start',
+      marginTop: 4,
+    },
+    headerActionGroup: {
+      flexDirection: 'row',
       gap: tokens.spacing.sm,
     },
-    primaryButton: {
-      borderWidth: 1,
-      borderColor: tokens.colors.buttonBorder,
-      backgroundColor: tokens.colors.buttonBackground,
-      borderRadius: tokens.radius.full,
-      paddingHorizontal: 16,
-      paddingVertical: 11,
+    inlineButton: {
+      paddingHorizontal: 0,
+      paddingVertical: 0,
     },
-    primaryButtonText: {
-      color: tokens.colors.buttonText,
-      fontSize: 12,
-      fontWeight: '600',
-      letterSpacing: 0.8,
-      textTransform: 'uppercase',
-    },
-    secondaryButton: {
-      borderWidth: 1,
-      borderColor: tokens.colors.divider,
-      backgroundColor: tokens.colors.surfaceSoft,
-      borderRadius: tokens.radius.full,
-      paddingHorizontal: 14,
-      paddingVertical: 11,
-    },
-    secondaryButtonText: {
+    inlineButtonText: {
       color: tokens.colors.textSecondary,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: '600',
-      letterSpacing: 0.6,
+      letterSpacing: 0.4,
       textTransform: 'uppercase',
+    },
+    iconButtonShell: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+    },
+    iconButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     hero: {
-      paddingTop: 10,
-      paddingBottom: 8,
-      gap: tokens.spacing.lg,
+      gap: tokens.spacing.md,
+    },
+    heroMetaRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: tokens.spacing.md,
+    },
+    heroEyebrow: {
+      color: tokens.colors.textMuted,
+      fontSize: 12,
+      letterSpacing: 1.6,
+      textTransform: 'uppercase',
+    },
+    heroMetaText: {
+      color: tokens.colors.textSecondary,
+      fontSize: 13,
+      fontWeight: '500',
     },
     heroMain: {
       flexDirection: 'row',
-      alignItems: 'flex-end',
       justifyContent: 'space-between',
+      alignItems: 'flex-end',
       gap: tokens.spacing.md,
     },
-    heroMeta: {
+    heroPrimary: {
+      flex: 1,
+    },
+    heroSecondary: {
       alignItems: 'flex-end',
-      paddingBottom: 14,
-      gap: 8,
+      paddingBottom: 12,
+      gap: 6,
     },
     temperature: {
       color: tokens.colors.textPrimary,
       fontSize: tokens.typography.temp,
       fontWeight: '200',
       lineHeight: 108,
-      letterSpacing: -4,
+      letterSpacing: -4.6,
     },
     condition: {
       color: tokens.colors.textPrimary,
       fontSize: 28,
       fontWeight: '600',
+      marginTop: 4,
     },
-    highLow: {
+    rangeLabel: {
       color: tokens.colors.textMuted,
-      fontSize: 16,
+      fontSize: 12,
+      letterSpacing: 1.2,
+      textTransform: 'uppercase',
     },
-    heroDivider: {
-      height: 1,
-      backgroundColor: tokens.colors.divider,
+    rangeValue: {
+      color: tokens.colors.textPrimary,
+      fontSize: 20,
+      fontWeight: '600',
     },
-    primaryMetricsRow: {
+    metricsRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: tokens.spacing.xl,
+      rowGap: tokens.spacing.md,
+      columnGap: tokens.spacing.lg,
     },
     metric: {
+      minWidth: '45%',
       gap: 4,
-      minWidth: 92,
     },
     metricLabel: {
       color: tokens.colors.textMuted,
       fontSize: 12,
-      letterSpacing: 1.2,
+      letterSpacing: 1.1,
       textTransform: 'uppercase',
     },
     metricValue: {
@@ -443,41 +638,43 @@ function createStyles(tokens: AppThemeTokens) {
       fontSize: 16,
       fontWeight: '600',
     },
-    advisoryRow: {
-      gap: 8,
-      paddingTop: tokens.spacing.md,
-      borderTopWidth: 1,
-      borderTopColor: tokens.colors.divider,
-    },
-    advisoryLabel: {
-      color: tokens.colors.textMuted,
-      fontSize: 12,
-      letterSpacing: 1.4,
-      textTransform: 'uppercase',
-    },
     advisoryText: {
       color: tokens.colors.textPrimary,
       fontSize: 18,
       lineHeight: 27,
-      maxWidth: 360,
+      maxWidth: 380,
     },
-    metricsGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
+    section: {
       gap: tokens.spacing.md,
-    },
-    infoTile: {
-      minWidth: '47%',
-      flexGrow: 1,
-      paddingTop: tokens.spacing.md,
+      paddingTop: tokens.spacing.lg,
       borderTopWidth: 1,
       borderTopColor: tokens.colors.divider,
-      gap: 6,
+    },
+    sectionHeadingRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    sectionTitle: {
+      color: tokens.colors.textPrimary,
+      fontSize: tokens.typography.section,
+      fontWeight: '600',
+    },
+    detailGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      rowGap: tokens.spacing.md,
+      columnGap: tokens.spacing.lg,
+    },
+    infoLine: {
+      minWidth: '45%',
+      flexGrow: 1,
+      gap: 4,
     },
     infoLabel: {
       color: tokens.colors.textMuted,
       fontSize: 12,
-      letterSpacing: 1.2,
+      letterSpacing: 1.1,
       textTransform: 'uppercase',
     },
     infoValue: {
@@ -485,25 +682,13 @@ function createStyles(tokens: AppThemeTokens) {
       fontSize: 22,
       fontWeight: '600',
     },
-    section: {
-      gap: tokens.spacing.md,
-    },
-    sectionHeader: {
-      paddingBottom: 2,
-    },
-    sectionTitle: {
-      color: tokens.colors.textPrimary,
-      fontSize: tokens.typography.section,
-      fontWeight: '600',
-    },
     hourlyRow: {
       gap: tokens.spacing.xl,
-      paddingRight: tokens.spacing.xl,
+      paddingRight: tokens.spacing.lg,
     },
     hourlyItem: {
-      minWidth: 92,
+      minWidth: 96,
       gap: 6,
-      paddingBottom: 8,
     },
     hourlyTime: {
       color: tokens.colors.textMuted,
@@ -513,21 +698,19 @@ function createStyles(tokens: AppThemeTokens) {
     },
     hourlyTemp: {
       color: tokens.colors.textPrimary,
-      fontSize: 32,
+      fontSize: 34,
       fontWeight: '600',
-      letterSpacing: -1,
+      letterSpacing: -1.4,
     },
     hourlyRain: {
       color: tokens.colors.accent,
-      fontSize: 14,
-      fontWeight: '600',
+      fontSize: 15,
+      fontWeight: '700',
     },
     hourlyCode: {
       color: tokens.colors.textSecondary,
       fontSize: 13,
-    },
-    weekList: {
-      gap: 0,
+      lineHeight: 18,
     },
     weekRow: {
       flexDirection: 'row',
@@ -536,6 +719,10 @@ function createStyles(tokens: AppThemeTokens) {
       paddingVertical: 16,
       borderBottomWidth: 1,
       borderBottomColor: tokens.colors.divider,
+    },
+    weekRowLast: {
+      borderBottomWidth: 0,
+      paddingBottom: 0,
     },
     weekLeading: {
       gap: 4,
