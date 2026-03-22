@@ -8,11 +8,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { motion } from '@/shared/animation/motion';
 import { useTranslation } from '@/shared/i18n/use-translation';
 import { useAppTheme } from '@/shared/theme/use-app-theme';
+import { ToolbarControls } from '@/shared/ui/toolbar-controls';
 import { usePreferencesStore } from '@/store/preferences-store';
 
 export function SettingsScreen() {
   const { t } = useTranslation();
-  const { tokens, themePreference } = useAppTheme();
+  const { tokens, themeName, themePreference } = useAppTheme();
   const localePreference = usePreferencesStore((state) => state.localePreference);
   const setThemePreference = usePreferencesStore((state) => state.setThemePreference);
   const setLocalePreference = usePreferencesStore((state) => state.setLocalePreference);
@@ -36,9 +37,18 @@ export function SettingsScreen() {
               <Text style={styles.eyebrow}>{t('settings')}</Text>
               <Text style={styles.title}>{t('preferences')}</Text>
             </View>
-            <Pressable onPress={() => router.back()} style={styles.closeButton}>
-              <Text style={styles.closeText}>{t('close')}</Text>
-            </Pressable>
+            <ToolbarControls
+              themeName={themeName}
+              tokens={tokens}
+              actions={[
+                {
+                  id: 'close',
+                  label: t('close'),
+                  systemImage: 'xmark',
+                  onPress: () => router.back(),
+                },
+              ]}
+            />
           </Animated.View>
 
           <Animated.View
@@ -179,17 +189,6 @@ function createStyles(tokens: ReturnType<typeof useAppTheme>['tokens']) {
       fontSize: 34,
       fontWeight: '700',
       letterSpacing: -1.2,
-    },
-    closeButton: {
-      paddingHorizontal: 0,
-      paddingVertical: 0,
-    },
-    closeText: {
-      color: tokens.colors.textSecondary,
-      fontSize: 13,
-      fontWeight: '600',
-      textTransform: 'uppercase',
-      letterSpacing: 0.4,
     },
     section: {
       gap: tokens.spacing.sm,

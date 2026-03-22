@@ -8,11 +8,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { motion } from '@/shared/animation/motion';
 import { useTranslation } from '@/shared/i18n/use-translation';
 import { useAppTheme } from '@/shared/theme/use-app-theme';
+import { ToolbarControls } from '@/shared/ui/toolbar-controls';
 import { presetCities, useAppStore } from '@/store/app-store';
 
 export function CitySearchScreen() {
   const { t } = useTranslation();
-  const { tokens } = useAppTheme();
+  const { tokens, themeName } = useAppTheme();
   const styles = createStyles(tokens);
   const [query, setQuery] = useState('');
   const selectedCity = useAppStore((state) => state.selectedCity);
@@ -40,9 +41,18 @@ export function CitySearchScreen() {
               <Text style={styles.eyebrow}>{t('search')}</Text>
               <Text style={styles.title}>{t('searchCity')}</Text>
             </View>
-            <Pressable onPress={() => router.back()} style={styles.closeButton}>
-              <Text style={styles.closeText}>{t('close')}</Text>
-            </Pressable>
+            <ToolbarControls
+              themeName={themeName}
+              tokens={tokens}
+              actions={[
+                {
+                  id: 'close',
+                  label: t('close'),
+                  systemImage: 'xmark',
+                  onPress: () => router.back(),
+                },
+              ]}
+            />
           </Animated.View>
 
           <Animated.View
@@ -138,17 +148,6 @@ function createStyles(tokens: ReturnType<typeof useAppTheme>['tokens']) {
       fontSize: 34,
       fontWeight: '700',
       letterSpacing: -1.2,
-    },
-    closeButton: {
-      paddingHorizontal: 0,
-      paddingVertical: 0,
-    },
-    closeText: {
-      color: tokens.colors.textSecondary,
-      fontSize: 13,
-      fontWeight: '600',
-      textTransform: 'uppercase',
-      letterSpacing: 0.4,
     },
     searchField: {
       borderBottomWidth: 1,

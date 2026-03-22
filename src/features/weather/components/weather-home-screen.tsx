@@ -1,11 +1,8 @@
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { SymbolView } from 'expo-symbols';
-import { Button as SwiftUIButton, ControlGroup, Host } from '@expo/ui/swift-ui';
-import { buttonStyle, controlSize, labelStyle } from '@expo/ui/swift-ui/modifiers';
 import React from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInRight, LinearTransition } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -23,7 +20,7 @@ import { useTranslation } from '@/shared/i18n/use-translation';
 import type { TranslationKey } from '@/shared/i18n/translations';
 import { useAppTheme } from '@/shared/theme/use-app-theme';
 import type { AppThemeTokens } from '@/shared/theme/tokens';
-import { GlassGroup, GlassSurface } from '@/shared/ui/glass-surface';
+import { ToolbarControls } from '@/shared/ui/toolbar-controls';
 import { useAppStore } from '@/store/app-store';
 
 export function WeatherHomeScreen() {
@@ -116,16 +113,30 @@ export function WeatherHomeScreen() {
               </View>
             </View>
 
-            <TopControls
-              styles={styles}
+            <ToolbarControls
               themeName={themeName}
               tokens={tokens}
-              searchLabel={t('search')}
-              addLabel={t('changeCity')}
-              settingsLabel={t('settings')}
-              onSearchPress={() => router.push('/search')}
-              onAddPress={handleToggleCity}
-              onSettingsPress={() => router.push('/settings')}
+              actions={[
+                {
+                  id: 'search',
+                  label: t('search'),
+                  systemImage: 'magnifyingglass',
+                  onPress: () => router.push('/search'),
+                },
+                {
+                  id: 'add',
+                  label: t('changeCity'),
+                  systemImage: 'plus',
+                  onPress: handleToggleCity,
+                  prominent: true,
+                },
+                {
+                  id: 'settings',
+                  label: t('settings'),
+                  systemImage: 'gearshape',
+                  onPress: () => router.push('/settings'),
+                },
+              ]}
             />
           </Animated.View>
 
@@ -229,122 +240,6 @@ export function WeatherHomeScreen() {
         </ScrollView>
       </SafeAreaView>
     </WeatherBackdrop>
-  );
-}
-
-function IconButton({
-  symbol,
-  onPress,
-  styles,
-  tintColor,
-  themeName,
-  tokens,
-}: {
-  symbol: 'magnifyingglass' | 'plus' | 'gearshape';
-  onPress: () => void;
-  styles: ReturnType<typeof createStyles>;
-  tintColor: string;
-  themeName: 'light' | 'dark';
-  tokens: AppThemeTokens;
-}) {
-  return (
-    <GlassSurface
-      colorScheme={themeName}
-      tintColor={tokens.colors.glassTint}
-      borderColor={tokens.colors.glassBorder}
-      fallbackColor={tokens.colors.surfaceSoft}
-      glassEffectStyle="regular"
-      style={styles.iconButtonShell}>
-      <Pressable onPress={onPress} style={styles.iconButton}>
-        <SymbolView
-          name={symbol}
-          size={18}
-          weight="medium"
-          type="hierarchical"
-          tintColor={tintColor}
-        />
-      </Pressable>
-    </GlassSurface>
-  );
-}
-
-function TopControls({
-  styles,
-  themeName,
-  tokens,
-  searchLabel,
-  addLabel,
-  settingsLabel,
-  onSearchPress,
-  onAddPress,
-  onSettingsPress,
-}: {
-  styles: ReturnType<typeof createStyles>;
-  themeName: 'light' | 'dark';
-  tokens: AppThemeTokens;
-  searchLabel: string;
-  addLabel: string;
-  settingsLabel: string;
-  onSearchPress: () => void;
-  onAddPress: () => void;
-  onSettingsPress: () => void;
-}) {
-  if (Platform.OS === 'ios') {
-    return (
-      <Host matchContents colorScheme={themeName} style={styles.swiftUIHost}>
-        <ControlGroup modifiers={[controlSize('small')]}>
-          <SwiftUIButton
-            label={searchLabel}
-            systemImage="magnifyingglass"
-            onPress={onSearchPress}
-            modifiers={[buttonStyle('glass'), labelStyle('iconOnly')]}
-          />
-          <SwiftUIButton
-            label={addLabel}
-            systemImage="plus"
-            onPress={onAddPress}
-            modifiers={[buttonStyle('glass'), labelStyle('iconOnly')]}
-          />
-          <SwiftUIButton
-            label={settingsLabel}
-            systemImage="gearshape"
-            onPress={onSettingsPress}
-            modifiers={[buttonStyle('glass'), labelStyle('iconOnly')]}
-          />
-        </ControlGroup>
-      </Host>
-    );
-  }
-
-  return (
-    <View style={styles.headerActions}>
-      <GlassGroup spacing={16} style={styles.headerActionGroup}>
-        <IconButton
-          symbol="magnifyingglass"
-          onPress={onSearchPress}
-          styles={styles}
-          tintColor={tokens.colors.textPrimary}
-          themeName={themeName}
-          tokens={tokens}
-        />
-        <IconButton
-          symbol="plus"
-          onPress={onAddPress}
-          styles={styles}
-          tintColor={tokens.colors.textPrimary}
-          themeName={themeName}
-          tokens={tokens}
-        />
-        <IconButton
-          symbol="gearshape"
-          onPress={onSettingsPress}
-          styles={styles}
-          tintColor={tokens.colors.textPrimary}
-          themeName={themeName}
-          tokens={tokens}
-        />
-      </GlassGroup>
-    </View>
   );
 }
 
@@ -528,14 +423,6 @@ function createStyles(tokens: AppThemeTokens) {
       justifyContent: 'flex-end',
       paddingTop: 8,
     },
-    swiftUIHost: {
-      alignSelf: 'flex-start',
-      marginTop: 4,
-    },
-    headerActionGroup: {
-      flexDirection: 'row',
-      gap: tokens.spacing.sm,
-    },
     inlineButton: {
       paddingHorizontal: 0,
       paddingVertical: 0,
@@ -546,18 +433,6 @@ function createStyles(tokens: AppThemeTokens) {
       fontWeight: '600',
       letterSpacing: 0.4,
       textTransform: 'uppercase',
-    },
-    iconButtonShell: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-    },
-    iconButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      alignItems: 'center',
-      justifyContent: 'center',
     },
     hero: {
       gap: tokens.spacing.md,
