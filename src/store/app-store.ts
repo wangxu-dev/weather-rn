@@ -24,7 +24,6 @@ type AppState = {
   hasResolvedInitialLocation: boolean;
   setSelectedCity: (city: City) => void;
   markInitialLocationResolved: () => void;
-  toggleCity: () => void;
 };
 
 export const useAppStore = create<AppState>((set) => ({
@@ -32,8 +31,4 @@ export const useAppStore = create<AppState>((set) => ({
   hasResolvedInitialLocation: false,
   setSelectedCity: (selectedCity) => set({ selectedCity }),
   markInitialLocationResolved: () => set({ hasResolvedInitialLocation: true }),
-  toggleCity: () =>
-    set((state) => ({
-      selectedCity: state.selectedCity.id === presetCities[0].id ? presetCities[1] : presetCities[0],
-    })),
 }));

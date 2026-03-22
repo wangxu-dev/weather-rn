@@ -7,6 +7,11 @@ import {
 import type { City, WeatherSnapshot } from '@/features/weather/model/weather.types';
 
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
+const GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search';
+
+export type CitySearchResult = City & {
+  subtitle: string;
+};
 
 function range(start: number, stop: number, step: number) {
   return Array.from({ length: (stop - start) / step }, (_, index) => start + index * step);
@@ -14,6 +19,56 @@ function range(start: number, stop: number, step: number) {
 
 function valuesToArray(values: ArrayLike<number> | null) {
   return values ? Array.from(values) : [];
+}
+
+function formatCityName(parts: Array<string | undefined>) {
+  return parts.filter(Boolean).join(', ');
+}
+
+function normalizeGeocodingLanguage(locale: string) {
+  return locale.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+}
+
+export async function searchCities(query: string, locale: string): Promise<CitySearchResult[]> {
+  const trimmedQuery = query.trim();
+  if (trimmedQuery.length < 2) {
+    return [];
+  }
+
+  const params = new URLSearchParams({
+    name: trimmedQuery,
+    count: '10',
+    language: normalizeGeocodingLanguage(locale),
+    format: 'json',
+  });
+  const response = await fetch(`${GEOCODING_URL}?${params.toString()}`);
+
+  if (!response.ok) {
+    throw new Error('Open-Meteo geocoding request failed.');
+  }
+
+  const payload = (await response.json()) as {
+    results?: Array<{
+      id?: number;
+      name: string;
+      latitude: number;
+      longitude: number;
+      timezone?: string;
+      admin1?: string;
+      country?: string;
+    }>;
+  };
+
+  return (payload.results ?? [])
+    .filter((item) => item.timezone)
+    .map((item) => ({
+      id: item.id ? `geo-${item.id}` : `geo-${item.latitude}-${item.longitude}`,
+      name: formatCityName([item.name, item.admin1]),
+      latitude: item.latitude,
+      longitude: item.longitude,
+      timezone: item.timezone!,
+      subtitle: formatCityName([item.country, item.timezone]),
+    }));
 }
 
 export async function fetchWeatherSnapshot(city: City): Promise<WeatherSnapshot> {

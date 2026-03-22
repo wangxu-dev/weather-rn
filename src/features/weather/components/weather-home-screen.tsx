@@ -1,6 +1,5 @@
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInRight, LinearTransition } from 'react-native-reanimated';
@@ -25,18 +24,12 @@ import { useAppStore } from '@/store/app-store';
 
 export function WeatherHomeScreen() {
   const city = useAppStore((state) => state.selectedCity);
-  const toggleCity = useAppStore((state) => state.toggleCity);
   const weatherQuery = useWeatherSnapshot(city);
   const { t } = useTranslation();
   const { tokens, themeName } = useAppTheme();
   const styles = createStyles(tokens);
 
   useBootstrapLocation();
-
-  function handleToggleCity() {
-    Haptics.selectionAsync();
-    toggleCity();
-  }
 
   if (weatherQuery.isPending) {
     return (
@@ -105,13 +98,13 @@ export function WeatherHomeScreen() {
             entering={FadeInDown.duration(motion.duration.slow).easing(motion.easing.standard)}
             layout={LinearTransition}
             style={styles.headerRow}>
-            <View style={styles.headerCopy}>
+            <Animated.View key={`city-${snapshot.city.id}`} entering={FadeInDown.duration(280)} style={styles.headerCopy}>
               <Text style={styles.brand}>{t('brand')}</Text>
               <View style={styles.cityRow}>
                 <Text style={styles.city}>{snapshot.city.name}</Text>
                 {city.id.startsWith('current-') && <View style={styles.locationDot} />}
               </View>
-            </View>
+            </Animated.View>
 
             <ToolbarControls
               themeName={themeName}
@@ -124,13 +117,6 @@ export function WeatherHomeScreen() {
                   onPress: () => router.push('/search'),
                 },
                 {
-                  id: 'add',
-                  label: t('changeCity'),
-                  systemImage: 'plus',
-                  onPress: handleToggleCity,
-                  prominent: true,
-                },
-                {
                   id: 'settings',
                   label: t('settings'),
                   systemImage: 'gearshape',
@@ -139,102 +125,103 @@ export function WeatherHomeScreen() {
               ]}
             />
           </Animated.View>
-
-          <Animated.View
-            entering={FadeInDown.delay(50).duration(motion.duration.slow).easing(motion.easing.standard)}
-            style={styles.hero}>
-            <View style={styles.heroMetaRow}>
-              <Text style={styles.heroEyebrow}>{t('currentConditions')}</Text>
-              <Text style={styles.heroMetaText}>{formatWeekday(today.date)}</Text>
-            </View>
-
-            <View style={styles.heroMain}>
-              <View style={styles.heroPrimary}>
-                <Text style={styles.temperature}>{Math.round(snapshot.current.temperature)}°</Text>
-                <Text style={styles.condition}>{weatherLabel}</Text>
+          <Animated.View key={`snapshot-${snapshot.city.id}`} entering={FadeInDown.duration(320)} style={styles.snapshotContent}>
+            <Animated.View
+              entering={FadeInDown.delay(50).duration(motion.duration.slow).easing(motion.easing.standard)}
+              style={styles.hero}>
+              <View style={styles.heroMetaRow}>
+                <Text style={styles.heroEyebrow}>{t('currentConditions')}</Text>
+                <Text style={styles.heroMetaText}>{formatWeekday(today.date)}</Text>
               </View>
-              <View style={styles.heroSecondary}>
-                <Text style={styles.rangeLabel}>{t('range')}</Text>
-                <Text style={styles.rangeValue}>
-                  {Math.round(today.temperatureMin)}° / {Math.round(today.temperatureMax)}°
-                </Text>
-              </View>
-            </View>
 
-            <View style={styles.metricsRow}>
-              {primaryMetrics.map((metric) => (
-                <Metric key={metric.label} label={metric.label} value={metric.value} styles={styles} />
-              ))}
-            </View>
-          </Animated.View>
-
-          <Animated.View
-            entering={FadeInDown.delay(120).duration(motion.duration.slow).easing(motion.easing.standard)}
-            style={styles.section}>
-            <View style={styles.sectionHeadingRow}>
-              <Text style={styles.sectionTitle}>{t('advisory')}</Text>
-            </View>
-            <Text style={styles.advisoryText}>{advisory}</Text>
-          </Animated.View>
-
-          <Animated.View
-            entering={FadeInDown.delay(160).duration(motion.duration.slow).easing(motion.easing.standard)}
-            style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('currentConditions')}</Text>
-            <View style={styles.detailGrid}>
-              {details.map((item) => (
-                <InfoLine key={item.label} label={item.label} value={item.value} styles={styles} />
-              ))}
-            </View>
-          </Animated.View>
-
-          <Animated.View
-            entering={FadeInDown.delay(220).duration(motion.duration.slow).easing(motion.easing.standard)}
-            style={styles.section}>
-            <View style={styles.sectionHeadingRow}>
-              <Text style={styles.sectionTitle}>{t('nextHours')}</Text>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hourlyRow}>
-              {snapshot.hourly.map((item, index) => (
-                <Animated.View
-                  key={item.time}
-                  entering={FadeInRight
-                    .delay(200 + index * motion.stagger)
-                    .duration(motion.duration.normal)
-                    .easing(motion.easing.standard)}
-                  style={styles.hourlyItem}>
-                  <Text style={styles.hourlyTime}>{formatHourLabel(item.time)}</Text>
-                  <Text style={styles.hourlyTemp}>{Math.round(item.temperature)}°</Text>
-                  <Text style={styles.hourlyRain}>{Math.round(item.precipitationProbability)}%</Text>
-                  <Text style={styles.hourlyCode}>{t(weatherCodeToKey(item.weatherCode))}</Text>
-                </Animated.View>
-              ))}
-            </ScrollView>
-          </Animated.View>
-
-          <Animated.View
-            entering={FadeInDown.delay(300).duration(motion.duration.slow).easing(motion.easing.standard)}
-            style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('weekOutlook')}</Text>
-            <Animated.View layout={LinearTransition}>
-              {snapshot.daily.map((item, index) => (
-                <Animated.View
-                  key={item.date}
-                  entering={FadeInDown
-                    .delay(280 + index * motion.stagger)
-                    .duration(motion.duration.normal)
-                    .easing(motion.easing.standard)}
-                  layout={LinearTransition}
-                  style={[styles.weekRow, index === snapshot.daily.length - 1 && styles.weekRowLast]}>
-                  <View style={styles.weekLeading}>
-                    <Text style={styles.weekDay}>{index === 0 ? t('today') : formatWeekday(item.date)}</Text>
-                    <Text style={styles.weekCode}>{t(weatherCodeToKey(item.weatherCode))}</Text>
-                  </View>
-                  <Text style={styles.weekRange}>
-                    {Math.round(item.temperatureMin)}°  {Math.round(item.temperatureMax)}°
+              <View style={styles.heroMain}>
+                <View style={styles.heroPrimary}>
+                  <Text style={styles.temperature}>{Math.round(snapshot.current.temperature)}°</Text>
+                  <Text style={styles.condition}>{weatherLabel}</Text>
+                </View>
+                <View style={styles.heroSecondary}>
+                  <Text style={styles.rangeLabel}>{t('range')}</Text>
+                  <Text style={styles.rangeValue}>
+                    {Math.round(today.temperatureMin)}° / {Math.round(today.temperatureMax)}°
                   </Text>
-                </Animated.View>
-              ))}
+                </View>
+              </View>
+
+              <View style={styles.metricsRow}>
+                {primaryMetrics.map((metric) => (
+                  <Metric key={metric.label} label={metric.label} value={metric.value} styles={styles} />
+                ))}
+              </View>
+            </Animated.View>
+
+            <Animated.View
+              entering={FadeInDown.delay(120).duration(motion.duration.slow).easing(motion.easing.standard)}
+              style={styles.section}>
+              <View style={styles.sectionHeadingRow}>
+                <Text style={styles.sectionTitle}>{t('advisory')}</Text>
+              </View>
+              <Text style={styles.advisoryText}>{advisory}</Text>
+            </Animated.View>
+
+            <Animated.View
+              entering={FadeInDown.delay(160).duration(motion.duration.slow).easing(motion.easing.standard)}
+              style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('currentConditions')}</Text>
+              <View style={styles.detailGrid}>
+                {details.map((item) => (
+                  <InfoLine key={item.label} label={item.label} value={item.value} styles={styles} />
+                ))}
+              </View>
+            </Animated.View>
+
+            <Animated.View
+              entering={FadeInDown.delay(220).duration(motion.duration.slow).easing(motion.easing.standard)}
+              style={styles.section}>
+              <View style={styles.sectionHeadingRow}>
+                <Text style={styles.sectionTitle}>{t('nextHours')}</Text>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hourlyRow}>
+                {snapshot.hourly.map((item, index) => (
+                  <Animated.View
+                    key={item.time}
+                    entering={FadeInRight
+                      .delay(200 + index * motion.stagger)
+                      .duration(motion.duration.normal)
+                      .easing(motion.easing.standard)}
+                    style={styles.hourlyItem}>
+                    <Text style={styles.hourlyTime}>{formatHourLabel(item.time)}</Text>
+                    <Text style={styles.hourlyTemp}>{Math.round(item.temperature)}°</Text>
+                    <Text style={styles.hourlyRain}>{Math.round(item.precipitationProbability)}%</Text>
+                    <Text style={styles.hourlyCode}>{t(weatherCodeToKey(item.weatherCode))}</Text>
+                  </Animated.View>
+                ))}
+              </ScrollView>
+            </Animated.View>
+
+            <Animated.View
+              entering={FadeInDown.delay(300).duration(motion.duration.slow).easing(motion.easing.standard)}
+              style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('weekOutlook')}</Text>
+              <Animated.View layout={LinearTransition}>
+                {snapshot.daily.map((item, index) => (
+                  <Animated.View
+                    key={item.date}
+                    entering={FadeInDown
+                      .delay(280 + index * motion.stagger)
+                      .duration(motion.duration.normal)
+                      .easing(motion.easing.standard)}
+                    layout={LinearTransition}
+                    style={[styles.weekRow, index === snapshot.daily.length - 1 && styles.weekRowLast]}>
+                    <View style={styles.weekLeading}>
+                      <Text style={styles.weekDay}>{index === 0 ? t('today') : formatWeekday(item.date)}</Text>
+                      <Text style={styles.weekCode}>{t(weatherCodeToKey(item.weatherCode))}</Text>
+                    </View>
+                    <Text style={styles.weekRange}>
+                      {Math.round(item.temperatureMin)}°  {Math.round(item.temperatureMax)}°
+                    </Text>
+                  </Animated.View>
+                ))}
+              </Animated.View>
             </Animated.View>
           </Animated.View>
         </ScrollView>
@@ -433,6 +420,9 @@ function createStyles(tokens: AppThemeTokens) {
       fontWeight: '600',
       letterSpacing: 0.4,
       textTransform: 'uppercase',
+    },
+    snapshotContent: {
+      gap: tokens.spacing.xl,
     },
     hero: {
       gap: tokens.spacing.md,

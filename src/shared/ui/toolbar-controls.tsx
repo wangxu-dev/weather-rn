@@ -1,4 +1,4 @@
-import { Button as SwiftUIButton, ControlGroup, Host } from '@expo/ui/swift-ui';
+import { Button as SwiftUIButton, GlassEffectContainer, HStack, Host } from '@expo/ui/swift-ui';
 import { buttonStyle, controlSize, labelStyle } from '@expo/ui/swift-ui/modifiers';
 import { SymbolView } from 'expo-symbols';
 import React from 'react';
@@ -33,76 +33,88 @@ type ToolbarControlsProps = {
 };
 
 export function ToolbarControls({ actions, themeName, tokens }: ToolbarControlsProps) {
-  if (Platform.OS === 'ios') {
+  const mode = Platform.OS === 'ios' ? 'swift-ui' : 'fallback';
+
+  if (mode === 'swift-ui') {
     return (
-      <Host matchContents colorScheme={themeName} style={styles.swiftUIHost}>
-        <ControlGroup modifiers={[controlSize(actions.length === 1 ? 'regular' : 'large')]}>
-          {actions.map((action) => (
-            <SwiftUIButton
-              key={action.id}
-              label={action.label}
-              systemImage={action.systemImage}
-              onPress={action.onPress}
-              modifiers={[
-                buttonStyle(action.prominent ? 'glassProminent' : 'glass'),
-                labelStyle('iconOnly'),
-              ]}
-            />
-          ))}
-        </ControlGroup>
-      </Host>
+      <View style={styles.wrap}>
+        <Host matchContents colorScheme={themeName} style={styles.swiftUIHost}>
+          <GlassEffectContainer spacing={10}>
+            <HStack spacing={10}>
+              {actions.map((action) => (
+                <SwiftUIButton
+                  key={action.id}
+                  label={action.label}
+                  systemImage={action.systemImage}
+                  onPress={action.onPress}
+                  modifiers={[
+                    controlSize('large'),
+                    buttonStyle(action.prominent ? 'glassProminent' : 'glass'),
+                    labelStyle('iconOnly'),
+                  ]}
+                />
+              ))}
+            </HStack>
+          </GlassEffectContainer>
+        </Host>
+      </View>
     );
   }
 
   return (
-    <View style={styles.fallbackWrap}>
-      <GlassGroup spacing={16} style={styles.fallbackGroup}>
-        {actions.map((action) => (
-          <GlassSurface
-            key={action.id}
-            colorScheme={themeName}
-            tintColor={tokens.colors.glassTint}
-            borderColor={tokens.colors.glassBorder}
-            fallbackColor={action.prominent ? tokens.colors.glassTint : tokens.colors.surfaceSoft}
-            glassEffectStyle="regular"
-            style={styles.iconShell}>
-            <Pressable onPress={action.onPress} style={styles.iconButton}>
-              <SymbolView
-                name={action.systemImage}
-                size={18}
-                weight="medium"
-                type="hierarchical"
-                tintColor={tokens.colors.textPrimary}
-              />
-            </Pressable>
-          </GlassSurface>
-        ))}
-      </GlassGroup>
+    <View style={styles.wrap}>
+      <View style={styles.fallbackWrap}>
+        <GlassGroup spacing={16} style={styles.fallbackGroup}>
+          {actions.map((action) => (
+            <GlassSurface
+              key={action.id}
+              colorScheme={themeName}
+              tintColor={tokens.colors.glassTint}
+              borderColor={tokens.colors.glassBorder}
+              fallbackColor={action.prominent ? tokens.colors.glassTint : tokens.colors.surfaceSoft}
+              glassEffectStyle="regular"
+              style={styles.iconShell}>
+              <Pressable onPress={action.onPress} style={styles.iconButton}>
+                <SymbolView
+                  name={action.systemImage}
+                  size={18}
+                  weight="medium"
+                  type="hierarchical"
+                  tintColor={tokens.colors.textPrimary}
+                />
+              </Pressable>
+            </GlassSurface>
+          ))}
+        </GlassGroup>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: {
+    alignItems: 'flex-end',
+  },
   swiftUIHost: {
     alignSelf: 'flex-start',
-    marginTop: 2,
   },
   fallbackWrap: {
-    paddingTop: 8,
+    paddingTop: 4,
   },
   fallbackGroup: {
     flexDirection: 'row',
     gap: 10,
   },
   iconShell: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -1,7 +1,9 @@
+import { Host, Picker, Text as SwiftText, VStack } from '@expo/ui/swift-ui';
+import { controlSize, pickerStyle, tag } from '@expo/ui/swift-ui/modifiers';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,7 +11,7 @@ import { motion } from '@/shared/animation/motion';
 import { useTranslation } from '@/shared/i18n/use-translation';
 import { useAppTheme } from '@/shared/theme/use-app-theme';
 import { ToolbarControls } from '@/shared/ui/toolbar-controls';
-import { usePreferencesStore } from '@/store/preferences-store';
+import { usePreferencesStore, type LocalePreference, type ThemePreference } from '@/store/preferences-store';
 
 export function SettingsScreen() {
   const { t } = useTranslation();
@@ -18,6 +20,17 @@ export function SettingsScreen() {
   const setThemePreference = usePreferencesStore((state) => state.setThemePreference);
   const setLocalePreference = usePreferencesStore((state) => state.setLocalePreference);
   const styles = createStyles(tokens);
+
+  const themeOptions: Array<{ key: ThemePreference; label: string }> = [
+    { key: 'system', label: t('system') },
+    { key: 'light', label: t('light') },
+    { key: 'dark', label: t('dark') },
+  ];
+  const languageOptions: Array<{ key: LocalePreference; label: string }> = [
+    { key: 'system', label: t('system') },
+    { key: 'zh-CN', label: t('chinese') },
+    { key: 'en', label: t('english') },
+  ];
 
   return (
     <LinearGradient
@@ -33,9 +46,10 @@ export function SettingsScreen() {
           <Animated.View
             entering={FadeInDown.duration(motion.duration.slow).easing(motion.easing.standard)}
             style={styles.header}>
-            <View>
+            <View style={styles.headerCopy}>
               <Text style={styles.eyebrow}>{t('settings')}</Text>
               <Text style={styles.title}>{t('preferences')}</Text>
+              <Text style={styles.subtitle}>{t('settingsNote')}</Text>
             </View>
             <ToolbarControls
               themeName={themeName}
@@ -54,44 +68,26 @@ export function SettingsScreen() {
           <Animated.View
             entering={FadeInDown.delay(90).duration(motion.duration.slow).easing(motion.easing.standard)}>
             <PreferenceSection title={t('appearance')} note={t('themeNote')} styles={styles}>
-              {[
-                { key: 'system', label: t('system') },
-                { key: 'light', label: t('light') },
-                { key: 'dark', label: t('dark') },
-              ].map((option) => {
-                const active = option.key === themePreference;
-                return (
-                  <PreferenceChip
-                    key={option.key}
-                    label={option.label}
-                    active={active}
-                    styles={styles}
-                    onPress={() => setThemePreference(option.key as 'system' | 'light' | 'dark')}
-                  />
-                );
-              })}
+              <PreferenceControl
+                themeName={themeName}
+                styles={styles}
+                value={themePreference}
+                options={themeOptions}
+                onChange={(value) => setThemePreference(value as ThemePreference)}
+              />
             </PreferenceSection>
           </Animated.View>
 
           <Animated.View
             entering={FadeInDown.delay(150).duration(motion.duration.slow).easing(motion.easing.standard)}>
             <PreferenceSection title={t('language')} note={t('languageNote')} styles={styles}>
-              {[
-                { key: 'system', label: t('system') },
-                { key: 'zh-CN', label: t('chinese') },
-                { key: 'en', label: t('english') },
-              ].map((option) => {
-                const active = option.key === localePreference;
-                return (
-                  <PreferenceChip
-                    key={option.key}
-                    label={option.label}
-                    active={active}
-                    styles={styles}
-                    onPress={() => setLocalePreference(option.key as 'system' | 'zh-CN' | 'en')}
-                  />
-                );
-              })}
+              <PreferenceControl
+                themeName={themeName}
+                styles={styles}
+                value={localePreference}
+                options={languageOptions}
+                onChange={(value) => setLocalePreference(value as LocalePreference)}
+              />
             </PreferenceSection>
           </Animated.View>
         </ScrollView>
@@ -115,26 +111,56 @@ function PreferenceSection({
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
       <Text style={styles.sectionNote}>{note}</Text>
-      <View style={styles.optionRow}>{children}</View>
+      {children}
     </View>
   );
 }
 
-function PreferenceChip({
-  label,
-  active,
+function PreferenceControl({
+  themeName,
   styles,
-  onPress,
+  value,
+  options,
+  onChange,
 }: {
-  label: string;
-  active: boolean;
+  themeName: 'light' | 'dark';
   styles: ReturnType<typeof createStyles>;
-  onPress: () => void;
+  value: string;
+  options: Array<{ key: string; label: string }>;
+  onChange: (value: string) => void;
 }) {
+  if (Platform.OS === 'ios') {
+    return (
+      <View style={styles.nativeControlWrap}>
+        <Host matchContents colorScheme={themeName} style={styles.nativeControlHost}>
+          <VStack spacing={0}>
+            <Picker
+              selection={value}
+              onSelectionChange={onChange}
+              modifiers={[pickerStyle('segmented'), controlSize('large')]}>
+              {options.map((option) => (
+                <SwiftText key={option.key} modifiers={[tag(option.key)]}>
+                  {option.label}
+                </SwiftText>
+              ))}
+            </Picker>
+          </VStack>
+        </Host>
+      </View>
+    );
+  }
+
   return (
-    <Pressable onPress={onPress} style={[styles.chip, active && styles.chipActive]}>
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
-    </Pressable>
+    <View style={styles.optionRow}>
+      {options.map((option) => {
+        const active = option.key === value;
+        return (
+          <Pressable key={option.key} onPress={() => onChange(option.key)} style={[styles.chip, active && styles.chipActive]}>
+            <Text style={[styles.chipText, active && styles.chipTextActive]}>{option.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
@@ -174,21 +200,31 @@ function createStyles(tokens: ReturnType<typeof useAppTheme>['tokens']) {
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       gap: tokens.spacing.md,
+    },
+    headerCopy: {
+      flex: 1,
+      gap: 6,
     },
     eyebrow: {
       color: tokens.colors.textMuted,
       fontSize: 12,
       textTransform: 'uppercase',
       letterSpacing: 2,
-      marginBottom: 8,
+      marginBottom: 4,
     },
     title: {
       color: tokens.colors.textPrimary,
       fontSize: 34,
       fontWeight: '700',
       letterSpacing: -1.2,
+    },
+    subtitle: {
+      color: tokens.colors.textSecondary,
+      fontSize: 15,
+      lineHeight: 22,
+      maxWidth: 300,
     },
     section: {
       gap: tokens.spacing.sm,
@@ -206,6 +242,12 @@ function createStyles(tokens: ReturnType<typeof useAppTheme>['tokens']) {
       fontSize: 15,
       lineHeight: 22,
       maxWidth: 320,
+    },
+    nativeControlWrap: {
+      paddingTop: tokens.spacing.sm,
+    },
+    nativeControlHost: {
+      alignSelf: 'stretch',
     },
     optionRow: {
       flexDirection: 'row',
