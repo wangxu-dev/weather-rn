@@ -25,7 +25,7 @@ import { useAppStore } from '@/store/app-store';
 export function WeatherHomeScreen() {
   const city = useAppStore((state) => state.selectedCity);
   const weatherQuery = useWeatherSnapshot(city);
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { tokens, themeName } = useAppTheme();
   const styles = createStyles(tokens);
 
@@ -86,8 +86,8 @@ export function WeatherHomeScreen() {
   const details = [
     { label: t('pressure'), value: `${Math.round(snapshot.current.pressure)} hPa` },
     { label: t('uvIndex'), value: `${Math.round(snapshot.current.uvIndex)}` },
-    { label: t('sunrise'), value: formatClockTime(today.sunrise) },
-    { label: t('sunset'), value: formatClockTime(today.sunset) },
+    { label: t('sunrise'), value: formatClockTime(today.sunrise, locale) },
+    { label: t('sunset'), value: formatClockTime(today.sunset, locale) },
   ];
 
   return (
@@ -131,7 +131,7 @@ export function WeatherHomeScreen() {
               style={styles.hero}>
               <View style={styles.heroMetaRow}>
                 <Text style={styles.heroEyebrow}>{t('currentConditions')}</Text>
-                <Text style={styles.heroMetaText}>{formatWeekday(today.date)}</Text>
+                <Text style={styles.heroMetaText}>{formatWeekday(today.date, locale)}</Text>
               </View>
 
               <View style={styles.heroMain}>
@@ -189,7 +189,7 @@ export function WeatherHomeScreen() {
                       .duration(motion.duration.normal)
                       .easing(motion.easing.standard)}
                     style={styles.hourlyItem}>
-                    <Text style={styles.hourlyTime}>{formatHourLabel(item.time)}</Text>
+                    <Text style={styles.hourlyTime}>{formatHourLabel(item.time, locale)}</Text>
                     <Text style={styles.hourlyTemp}>{Math.round(item.temperature)}°</Text>
                     <Text style={styles.hourlyRain}>{Math.round(item.precipitationProbability)}%</Text>
                     <Text style={styles.hourlyCode}>{t(weatherCodeToKey(item.weatherCode))}</Text>
@@ -213,7 +213,9 @@ export function WeatherHomeScreen() {
                     layout={LinearTransition}
                     style={[styles.weekRow, index === snapshot.daily.length - 1 && styles.weekRowLast]}>
                     <View style={styles.weekLeading}>
-                      <Text style={styles.weekDay}>{index === 0 ? t('today') : formatWeekday(item.date)}</Text>
+                      <Text style={styles.weekDay}>
+                        {index === 0 ? t('today') : formatWeekday(item.date, locale)}
+                      </Text>
                       <Text style={styles.weekCode}>{t(weatherCodeToKey(item.weatherCode))}</Text>
                     </View>
                     <Text style={styles.weekRange}>

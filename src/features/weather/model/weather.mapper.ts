@@ -24,24 +24,28 @@ export function weatherCodeToKey(code: number) {
   return 'weatherUnknown';
 }
 
-export function formatHourLabel(dateTime: string) {
+function normalizeFormatterLocale(locale: string) {
+  return locale === 'zh-CN' ? 'zh-CN' : 'en-US';
+}
+
+export function formatHourLabel(dateTime: string, locale = 'en') {
   const date = new Date(dateTime);
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(normalizeFormatterLocale(locale), {
     hour: '2-digit',
     minute: '2-digit',
   }).format(date);
 }
 
-export function formatWeekday(dateTime: string) {
+export function formatWeekday(dateTime: string, locale = 'en') {
   const date = new Date(dateTime);
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(normalizeFormatterLocale(locale), {
     weekday: 'short',
   }).format(date);
 }
 
-export function formatClockTime(dateTime: string) {
+export function formatClockTime(dateTime: string, locale = 'en') {
   const date = new Date(dateTime);
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(normalizeFormatterLocale(locale), {
     hour: '2-digit',
     minute: '2-digit',
   }).format(date);
