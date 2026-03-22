@@ -21,6 +21,7 @@
         "expo-image": "~55.0.6",
         "expo-linear-gradient": "^55.0.9",
         "expo-linking": "~55.0.8",
+        "expo-localization": "^55.0.9",
         "expo-location": "^55.1.4",
         "expo-router": "~55.0.7",
         "expo-splash-screen": "~55.0.12",
@@ -655,6 +656,8 @@
 
     "expo-linking": ["expo-linking@55.0.8", "https://registry.npmmirror.com/expo-linking/-/expo-linking-55.0.8.tgz", { "dependencies": { "expo-constants": "~55.0.8", "invariant": "^2.2.4" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-O9QgKAfEqKfsjL6IKs5p7pFAjo/3/TQwjMzzNPl8BCndbxWMPQfMeViXPYYNS9bA2ujUqrtF1OYhO6woI7GNQQ=="],
 
+    "expo-localization": ["expo-localization@55.0.9", "https://registry.npmmirror.com/expo-localization/-/expo-localization-55.0.9.tgz", { "dependencies": { "rtl-detect": "^1.0.2" }, "peerDependencies": { "expo": "*", "react": "*" } }, "sha512-ABRg4wEt15OCp9/3XOLC4ltPVvXmJgeCKNTJ4Nb8N6byuHITJHvZ3PwcC2YGpTzlAqfGbcs3rJdfg1ObT54PJQ=="],
+
     "expo-location": ["expo-location@55.1.4", "https://registry.npmmirror.com/expo-location/-/expo-location-55.1.4.tgz", { "dependencies": { "@expo/image-utils": "^0.8.12" }, "peerDependencies": { "expo": "*" } }, "sha512-0QWQ4QP8I6svtGUL895Y8bvKM3nGUWNp/MdCoCQNH3uAuwvLf2TQ6ZDVD3kdlkl2wGGdw6ziHQIYDHL96OlfnA=="],
 
     "expo-modules-autolinking": ["expo-modules-autolinking@55.0.11", "https://registry.npmmirror.com/expo-modules-autolinking/-/expo-modules-autolinking-55.0.11.tgz", { "dependencies": { "@expo/require-utils": "^55.0.3", "@expo/spawn-async": "^1.7.2", "chalk": "^4.1.0", "commander": "^7.2.0" }, "bin": { "expo-modules-autolinking": "bin/expo-modules-autolinking.js" } }, "sha512-9dqnPzQoIl1dIvEctMWpQ8eaiXDeBTgAwebCc1WF0BbEo+pcdKjZWoCSqlLj+d7IX+OnTgM+k6cY2kPDGIu4sg=="],
@@ -1060,6 +1063,8 @@
     "restore-cursor": ["restore-cursor@2.0.0", "https://registry.npmmirror.com/restore-cursor/-/restore-cursor-2.0.0.tgz", { "dependencies": { "onetime": "^2.0.0", "signal-exit": "^3.0.2" } }, "sha512-6IzJLuGi4+R14vwagDHX+JrXmPVtPpn4mffDJ1UdR7/Edm87fl6yi8mMBIVvFtJaNTUvjughmW4hwLhRG7gC1Q=="],
 
     "rimraf": ["rimraf@3.0.2", "https://registry.npmmirror.com/rimraf/-/rimraf-3.0.2.tgz", { "dependencies": { "glob": "^7.1.3" }, "bin": { "rimraf": "bin.js" } }, "sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA=="],
+
+    "rtl-detect": ["rtl-detect@1.1.2", "https://registry.npmmirror.com/rtl-detect/-/rtl-detect-1.1.2.tgz", {}, "sha512-PGMBq03+TTG/p/cRB7HCLKJ1MgDIi07+QU1faSjiYRfmY5UsAttV9Hs08jDAHVwcOwmVLcSJkpwyfXszVjWfIQ=="],
 
     "safe-buffer": ["safe-buffer@5.2.1", "https://registry.npmmirror.com/safe-buffer/-/safe-buffer-5.2.1.tgz", {}, "sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ=="],
 

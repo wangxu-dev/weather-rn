@@ -12,7 +12,7 @@ function range(start: number, stop: number, step: number) {
   return Array.from({ length: (stop - start) / step }, (_, index) => start + index * step);
 }
 
-function valuesToArray(values: Float32Array<ArrayBufferLike> | null) {
+function valuesToArray(values: ArrayLike<number> | null) {
   return values ? Array.from(values) : [];
 }
 
@@ -21,9 +21,19 @@ export async function fetchWeatherSnapshot(city: City): Promise<WeatherSnapshot>
     latitude: city.latitude,
     longitude: city.longitude,
     timezone: city.timezone,
-    current: ['temperature_2m', 'apparent_temperature', 'weather_code', 'wind_speed_10m'],
-    hourly: ['temperature_2m', 'weather_code'],
-    daily: ['weather_code', 'temperature_2m_max', 'temperature_2m_min'],
+    current: [
+      'temperature_2m',
+      'apparent_temperature',
+      'weather_code',
+      'wind_speed_10m',
+      'wind_direction_10m',
+      'relative_humidity_2m',
+      'precipitation_probability',
+      'surface_pressure',
+      'uv_index',
+    ],
+    hourly: ['temperature_2m', 'weather_code', 'precipitation_probability'],
+    daily: ['weather_code', 'temperature_2m_max', 'temperature_2m_min', 'sunrise', 'sunset'],
   });
 
   const response = responses[0];
@@ -43,6 +53,8 @@ export async function fetchWeatherSnapshot(city: City): Promise<WeatherSnapshot>
   const dailyDates = range(Number(daily.time()), Number(daily.timeEnd()), daily.interval()).map(
     (value) => new Date((value + utcOffsetSeconds) * 1000).toISOString(),
   );
+  const sunriseValues = valuesToArray(daily.variables(3)!.valuesArray());
+  const sunsetValues = valuesToArray(daily.variables(4)!.valuesArray());
 
   return {
     city,
@@ -51,17 +63,25 @@ export async function fetchWeatherSnapshot(city: City): Promise<WeatherSnapshot>
       apparentTemperature: current.variables(1)!.value(),
       weatherCode: current.variables(2)!.value(),
       windSpeed: current.variables(3)!.value(),
+      windDirection: current.variables(4)!.value(),
+      humidity: current.variables(5)!.value(),
+      precipitationProbability: current.variables(6)!.value(),
+      pressure: current.variables(7)!.value(),
+      uvIndex: current.variables(8)!.value(),
     },
     hourly: toHourlyForecast(
       hourlyTimes,
       valuesToArray(hourly.variables(0)!.valuesArray()),
       valuesToArray(hourly.variables(1)!.valuesArray()),
+      valuesToArray(hourly.variables(2)!.valuesArray()),
     ),
     daily: toDailyForecast(
       dailyDates,
       valuesToArray(daily.variables(0)!.valuesArray()),
       valuesToArray(daily.variables(1)!.valuesArray()),
       valuesToArray(daily.variables(2)!.valuesArray()),
+      sunriseValues.map((value) => new Date((value + utcOffsetSeconds) * 1000).toISOString()),
+      sunsetValues.map((value) => new Date((value + utcOffsetSeconds) * 1000).toISOString()),
     ),
   };
 }

@@ -21,11 +21,17 @@ const cities: City[] = [
 
 type AppState = {
   selectedCity: City;
+  hasResolvedInitialLocation: boolean;
+  setSelectedCity: (city: City) => void;
+  markInitialLocationResolved: () => void;
   toggleCity: () => void;
 };
 
 export const useAppStore = create<AppState>((set) => ({
   selectedCity: cities[0],
+  hasResolvedInitialLocation: false,
+  setSelectedCity: (selectedCity) => set({ selectedCity }),
+  markInitialLocationResolved: () => set({ hasResolvedInitialLocation: true }),
   toggleCity: () =>
     set((state) => ({
       selectedCity: state.selectedCity.id === cities[0].id ? cities[1] : cities[0],
