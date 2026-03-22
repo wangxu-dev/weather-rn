@@ -18,7 +18,7 @@ export function CitySearchRow({
   styles,
 }: CityRowProps) {
   return (
-    <Pressable onPress={onPress} onLongPress={city.kind === 'saved' ? onLongPress : undefined} style={styles.row}>
+    <Pressable onPress={onPress} onLongPress={city.canDelete ? onLongPress : undefined} delayLongPress={280} style={styles.row}>
       <View style={styles.rowCopy}>
         <Text style={styles.cityName}>{city.name}</Text>
         <Text style={styles.cityMeta}>{city.subtitle}</Text>

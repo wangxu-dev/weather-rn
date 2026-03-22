@@ -9,25 +9,27 @@ export function buildSuggestedCities(
   savedCities: City[],
   currentCityLabel: string,
 ): CityListItem[] {
+  const selectedCityIsSaved = savedCities.some((city) => city.id === selectedCity.id);
   const savedCityItems = savedCities
     .filter((city) => city.id !== selectedCity.id)
-    .map((city) => ({ ...city, subtitle: city.timezone, kind: 'saved' as const }));
+    .map((city) => ({ ...city, subtitle: city.timezone, kind: 'saved' as const, canDelete: true }));
 
   return dedupeCities([
     {
       ...selectedCity,
       subtitle: selectedCity.id.startsWith('current-') ? currentCityLabel : selectedCity.timezone,
       kind: 'current' as const,
+      canDelete: selectedCityIsSaved,
     },
     ...savedCityItems,
     ...presetCities
       .filter((city) => city.id !== selectedCity.id && !savedCities.some((savedCity) => savedCity.id === city.id))
-      .map((city) => ({ ...city, subtitle: city.timezone, kind: 'preset' as const })),
+      .map((city) => ({ ...city, subtitle: city.timezone, kind: 'preset' as const, canDelete: false })),
   ]);
 }
 
 export function toSearchResultItems(cities: Array<City & { subtitle: string }>): CityListItem[] {
-  return cities.map((city) => ({ ...city, kind: 'search' as const }));
+  return cities.map((city) => ({ ...city, kind: 'search' as const, canDelete: false }));
 }
 
 function dedupeCities(cities: CityListItem[]) {
