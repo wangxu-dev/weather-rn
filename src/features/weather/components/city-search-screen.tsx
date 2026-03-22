@@ -40,10 +40,11 @@ export function CitySearchScreen() {
   }, [query]);
 
   const citySearch = useCitySearch(debouncedQuery, locale);
-  const suggestedCities = useMemo(
-    () => buildSuggestedCities(selectedCity, savedCities, t('currentCityLabel')),
-    [savedCities, selectedCity, t],
-  );
+  const suggestedCities = useMemo(() => buildSuggestedCities(selectedCity, savedCities, t('currentCityLabel')), [
+    savedCities,
+    selectedCity,
+    t,
+  ]);
   const savedCityItems = suggestedCities.filter((city) => city.kind === 'saved');
   const browsingCities = suggestedCities.filter((city) => city.kind !== 'saved');
   const searchResults = toSearchResultItems(citySearch.data ?? []);
@@ -137,15 +138,9 @@ export function CitySearchScreen() {
               title={t('searchResults')}
               hint={getSearchResultHint(citySearch.isPending, citySearch.isError, searchResults.length, t)}
               cities={searchResults}
-              selectedCityId={selectedCity.id}
               styles={styles}
               onSelect={handleSelectCity}
-              onDelete={handleDeleteCity}
               onLongPressDelete={handleLongPressDelete}
-              activeLabel={t('current')}
-              selectLabel={t('select')}
-              savedLabel={t('saved')}
-              deleteLabel={t('delete')}
             />
           ) : (
             <>
@@ -154,31 +149,21 @@ export function CitySearchScreen() {
                   title={t('savedCities')}
                   hint={t('savedCitiesHint')}
                   cities={savedCityItems}
-                  selectedCityId={selectedCity.id}
                   styles={styles}
                   onSelect={handleSelectCity}
-                  onDelete={handleDeleteCity}
                   onLongPressDelete={handleLongPressDelete}
-                  activeLabel={t('current')}
-                  selectLabel={t('select')}
-                  savedLabel={t('saved')}
-                  deleteLabel={t('delete')}
                 />
               ) : null}
-              <CitySearchSection
-                title={t('suggestedCities')}
-                hint={t('searchHint')}
-                cities={browsingCities}
-                selectedCityId={selectedCity.id}
-                styles={styles}
-                onSelect={handleSelectCity}
-                onDelete={handleDeleteCity}
-                onLongPressDelete={handleLongPressDelete}
-                activeLabel={t('current')}
-                selectLabel={t('select')}
-                savedLabel={t('saved')}
-                deleteLabel={t('delete')}
-              />
+              {browsingCities.length ? (
+                <CitySearchSection
+                  title={t('changeCity')}
+                  hint={t('searchHint')}
+                  cities={browsingCities}
+                  styles={styles}
+                  onSelect={handleSelectCity}
+                  onLongPressDelete={handleLongPressDelete}
+                />
+              ) : null}
             </>
           )}
         </ScrollView>
@@ -196,5 +181,5 @@ function getSearchResultHint(
   if (isPending) return t('searchingCities');
   if (isError) return t('citySearchError');
   if (resultCount === 0) return t('noCitiesFound');
-  return t('searchHint');
+  return t('searchResultHint');
 }

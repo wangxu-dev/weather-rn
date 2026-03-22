@@ -12,30 +12,18 @@ type CitySectionProps = {
   title: string;
   hint: string;
   cities: CityListItem[];
-  selectedCityId: string;
   styles: CitySearchStyles;
   onSelect: (city: CityListItem) => void;
-  onDelete: (city: CityListItem) => void;
   onLongPressDelete: (city: CityListItem) => void;
-  activeLabel: string;
-  selectLabel: string;
-  savedLabel: string;
-  deleteLabel: string;
 };
 
 export function CitySearchSection({
   title,
   hint,
   cities,
-  selectedCityId,
   styles,
   onSelect,
-  onDelete,
   onLongPressDelete,
-  activeLabel,
-  selectLabel,
-  savedLabel,
-  deleteLabel,
 }: CitySectionProps) {
   return (
     <Animated.View entering={FadeInDown.delay(120).duration(motion.duration.slow).easing(motion.easing.standard)} style={styles.section}>
@@ -46,14 +34,9 @@ export function CitySearchSection({
           <CitySearchRow
             key={city.id}
             city={city}
-            active={city.id === selectedCityId}
             onPress={() => onSelect(city)}
-            onDelete={() => onDelete(city)}
             onLongPress={() => onLongPressDelete(city)}
             styles={styles}
-            activeLabel={activeLabel}
-            idleLabel={city.kind === 'saved' ? savedLabel : selectLabel}
-            deleteLabel={deleteLabel}
           />
         ))}
       </View>

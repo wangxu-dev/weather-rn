@@ -89,9 +89,9 @@ export function createCitySearchStyles(tokens: ReturnType<typeof useAppTheme>['t
     },
     sectionHint: {
       color: tokens.colors.textSecondary,
-      fontSize: 14,
-      lineHeight: 20,
-      marginBottom: tokens.spacing.xs,
+      fontSize: 12,
+      lineHeight: 16,
+      marginBottom: 2,
     },
     list: {
       borderTopWidth: 1,
@@ -120,38 +120,6 @@ export function createCitySearchStyles(tokens: ReturnType<typeof useAppTheme>['t
       color: tokens.colors.textMuted,
       fontSize: 13,
       lineHeight: 18,
-    },
-    statusText: {
-      color: tokens.colors.textSecondary,
-      fontSize: 13,
-      fontWeight: '600',
-      textTransform: 'uppercase',
-      letterSpacing: 0.4,
-    },
-    statusTextActive: {
-      color: tokens.colors.accent,
-    },
-    deleteAction: {
-      width: 92,
-      justifyContent: 'center',
-      alignItems: 'flex-end',
-      borderBottomWidth: 1,
-      borderBottomColor: tokens.colors.divider,
-    },
-    deleteButton: {
-      alignSelf: 'stretch',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100%',
-      backgroundColor: '#ff5b57',
-      borderRadius: 16,
-      marginVertical: 8,
-      marginLeft: 14,
-    },
-    deleteText: {
-      color: '#fff',
-      fontSize: 15,
-      fontWeight: '600',
     },
   });
 }
