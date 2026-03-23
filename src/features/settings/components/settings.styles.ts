@@ -93,17 +93,27 @@ export function createSettingsStyles(tokens: ReturnType<typeof useAppTheme>['tok
       gap: tokens.spacing.sm,
       marginTop: tokens.spacing.sm,
     },
+    chipShell: {
+      borderRadius: tokens.radius.full,
+      minHeight: 42,
+      shadowColor: '#0b1a29',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.1,
+      shadowRadius: 18,
+      elevation: 5,
+    },
+    chipShellActive: {
+      transform: [{ scale: 1.01 }],
+    },
     chip: {
       paddingHorizontal: 14,
       paddingVertical: 10,
       borderRadius: tokens.radius.full,
-      borderWidth: 1,
-      borderColor: tokens.colors.divider,
-      backgroundColor: 'transparent',
+      minHeight: 42,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     chipActive: {
-      borderColor: tokens.colors.accent,
-      backgroundColor: tokens.colors.accentSoft,
     },
     chipText: {
       color: tokens.colors.textSecondary,

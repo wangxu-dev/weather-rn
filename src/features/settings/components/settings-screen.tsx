@@ -70,6 +70,7 @@ export function SettingsScreen() {
             <SettingsPreferenceControl
               themeName={themeName}
               styles={styles}
+              tokens={tokens}
               value={themePreference}
               options={themeOptions}
               onChange={(value) => setThemePreference(value as ThemePreference)}
@@ -80,6 +81,7 @@ export function SettingsScreen() {
             <SettingsPreferenceControl
               themeName={themeName}
               styles={styles}
+              tokens={tokens}
               value={localePreference}
               options={languageOptions}
               onChange={(value) => setLocalePreference(value as LocalePreference)}

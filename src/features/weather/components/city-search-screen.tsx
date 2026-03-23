@@ -12,6 +12,7 @@ import { motion } from '@/shared/animation/motion';
 import { useTranslation } from '@/shared/i18n/use-translation';
 import { useNavigationLock } from '@/shared/navigation/use-navigation-lock';
 import { useAppTheme } from '@/shared/theme/use-app-theme';
+import { GlassSurface } from '@/shared/ui/glass-surface';
 import { ToolbarControls } from '@/shared/ui/toolbar-controls';
 import { useAppStore } from '@/store/app-store';
 
@@ -120,16 +121,23 @@ export function CitySearchScreen() {
                 />
               </Host>
             ) : (
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                placeholder={t('citySearchPlaceholder')}
-                placeholderTextColor={tokens.colors.textMuted}
-                style={styles.searchInput}
-                autoFocus
-                autoCorrect={false}
-                returnKeyType="search"
-              />
+              <GlassSurface
+                colorScheme={themeName}
+                tintColor={tokens.colors.glassTint}
+                borderColor={tokens.colors.buttonBorder}
+                fallbackColor={tokens.colors.buttonBackground}
+                style={styles.searchInputShell}>
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder={t('citySearchPlaceholder')}
+                  placeholderTextColor={tokens.colors.textMuted}
+                  style={styles.searchInput}
+                  autoFocus
+                  autoCorrect={false}
+                  returnKeyType="search"
+                />
+              </GlassSurface>
             )}
           </Animated.View>
 

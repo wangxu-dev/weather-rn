@@ -23,6 +23,8 @@ type Tokens = {
     surfaceSoft: string;
     glassTint: string;
     glassBorder: string;
+    buttonBackground: string;
+    buttonBorder: string;
   };
 };
 
@@ -70,10 +72,10 @@ export function ToolbarControls({ actions, themeName, tokens }: ToolbarControlsP
               key={action.id}
               colorScheme={themeName}
               tintColor={tokens.colors.glassTint}
-              borderColor={tokens.colors.glassBorder}
-              fallbackColor={action.prominent ? tokens.colors.glassTint : tokens.colors.surfaceSoft}
+              borderColor={action.prominent ? tokens.colors.buttonBorder : tokens.colors.glassBorder}
+              fallbackColor={action.prominent ? tokens.colors.buttonBackground : tokens.colors.surfaceSoft}
               glassEffectStyle="regular"
-              style={styles.iconShell}>
+              style={[styles.iconShell, action.prominent && styles.iconShellProminent]}>
               <Pressable onPress={action.onPress} style={styles.iconButton}>
                 <SymbolView
                   name={action.systemImage}
@@ -111,6 +113,14 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#0b1a29',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 6,
+  },
+  iconShellProminent: {
+    transform: [{ scale: 1.02 }],
   },
   iconButton: {
     width: '100%',
