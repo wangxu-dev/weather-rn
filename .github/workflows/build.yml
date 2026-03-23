@@ -1,0 +1,65 @@
+name: Android Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Build profile to use
+        required: true
+        type: choice
+        options:
+          - preview
+          - production
+        default: preview
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate TypeScript
+        run: bun x tsc --noEmit
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Trigger Android build
+        run: eas build --platform android --profile ${{ inputs.channel }} --non-interactive --wait
+
+      - name: Read app version
+        if: ${{ inputs.channel == 'production' }}
+        id: version
+        run: echo "value=$(node -p \"require('./app.json').expo.version\")" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        if: ${{ inputs.channel == 'production' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "v${{ steps.version.outputs.value }}" >/dev/null 2>&1; then
+            echo "Release v${{ steps.version.outputs.value }} already exists."
+            exit 0
+          fi
+          gh release create "v${{ steps.version.outputs.value }}" --generate-notes --title "v${{ steps.version.outputs.value }}"
