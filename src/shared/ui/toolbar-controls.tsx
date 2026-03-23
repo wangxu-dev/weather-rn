@@ -1,5 +1,6 @@
 import { Button as SwiftUIButton, GlassEffectContainer, HStack, Host } from '@expo/ui/swift-ui';
 import { buttonStyle, controlSize, labelStyle } from '@expo/ui/swift-ui/modifiers';
+import { Feather } from '@expo/vector-icons';
 import { SymbolView } from 'expo-symbols';
 import React from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
@@ -73,12 +74,11 @@ export function ToolbarControls({ actions, themeName, tokens }: ToolbarControlsP
                 action.prominent && styles.iconShellProminent,
               ]}>
               <Pressable android_ripple={{ color: 'rgba(255,255,255,0.16)', borderless: true }} onPress={action.onPress} style={styles.iconButton}>
-                <SymbolView
-                  name={action.systemImage}
+                <Feather
+                  name={mapFallbackIcon(action.systemImage)}
                   size={18}
-                  weight="medium"
-                  type="hierarchical"
-                  tintColor={tokens.colors.buttonText}
+                  color={tokens.colors.buttonText}
+                  strokeWidth={2.2}
                 />
               </Pressable>
             </View>
@@ -121,3 +121,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+function mapFallbackIcon(systemImage: ToolbarAction['systemImage']): React.ComponentProps<typeof Feather>['name'] {
+  switch (systemImage) {
+    case 'magnifyingglass':
+      return 'search';
+    case 'gearshape':
+      return 'settings';
+    case 'xmark':
+      return 'x';
+    case 'plus':
+      return 'plus';
+  }
+}

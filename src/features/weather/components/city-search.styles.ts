@@ -75,11 +75,6 @@ export function createCitySearchStyles(tokens: ReturnType<typeof useAppTheme>['t
       borderRadius: 24,
       minHeight: 52,
       justifyContent: 'center',
-      shadowColor: '#0b1a29',
-      shadowOffset: { width: 0, height: 12 },
-      shadowOpacity: 0.1,
-      shadowRadius: 20,
-      elevation: 6,
     },
     searchInput: {
       color: tokens.colors.textPrimary,
