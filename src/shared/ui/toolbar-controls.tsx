@@ -4,8 +4,6 @@ import { SymbolView } from 'expo-symbols';
 import React from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
-import { GlassGroup, GlassSurface } from '@/shared/ui/glass-surface';
-
 type ThemeName = 'light' | 'dark';
 
 type ToolbarAction = {
@@ -18,13 +16,9 @@ type ToolbarAction = {
 
 type Tokens = {
   colors: {
-    textPrimary: string;
-    divider: string;
-    surfaceSoft: string;
-    glassTint: string;
-    glassBorder: string;
     buttonBackground: string;
     buttonBorder: string;
+    buttonText: string;
   };
 };
 
@@ -66,28 +60,30 @@ export function ToolbarControls({ actions, themeName, tokens }: ToolbarControlsP
   return (
     <View style={styles.wrap}>
       <View style={styles.fallbackWrap}>
-        <GlassGroup spacing={16} style={styles.fallbackGroup}>
+        <View style={styles.fallbackGroup}>
           {actions.map((action) => (
-            <GlassSurface
+            <View
               key={action.id}
-              colorScheme={themeName}
-              tintColor={tokens.colors.glassTint}
-              borderColor={action.prominent ? tokens.colors.buttonBorder : tokens.colors.glassBorder}
-              fallbackColor={action.prominent ? tokens.colors.buttonBackground : tokens.colors.surfaceSoft}
-              glassEffectStyle="regular"
-              style={[styles.iconShell, action.prominent && styles.iconShellProminent]}>
-              <Pressable onPress={action.onPress} style={styles.iconButton}>
+              style={[
+                styles.iconShell,
+                {
+                  backgroundColor: tokens.colors.buttonBackground,
+                  borderColor: tokens.colors.buttonBorder,
+                },
+                action.prominent && styles.iconShellProminent,
+              ]}>
+              <Pressable android_ripple={{ color: 'rgba(255,255,255,0.16)', borderless: true }} onPress={action.onPress} style={styles.iconButton}>
                 <SymbolView
                   name={action.systemImage}
                   size={18}
                   weight="medium"
                   type="hierarchical"
-                  tintColor={tokens.colors.textPrimary}
+                  tintColor={tokens.colors.buttonText}
                 />
               </Pressable>
-            </GlassSurface>
+            </View>
           ))}
-        </GlassGroup>
+        </View>
       </View>
     </View>
   );
@@ -108,19 +104,15 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   iconShell: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0b1a29',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    elevation: 6,
+    borderWidth: 1,
   },
   iconShellProminent: {
-    transform: [{ scale: 1.02 }],
+    borderWidth: 1.5,
   },
   iconButton: {
     width: '100%',

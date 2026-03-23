@@ -3,8 +3,6 @@ import { controlSize, pickerStyle, tag } from '@expo/ui/swift-ui/modifiers';
 import React from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 
-import { GlassGroup, GlassSurface } from '@/shared/ui/glass-surface';
-
 import type { SettingsStyles } from './settings.styles';
 
 type PreferenceControlProps = {
@@ -12,13 +10,11 @@ type PreferenceControlProps = {
   styles: SettingsStyles;
   tokens: {
     colors: {
-      textPrimary: string;
       textSecondary: string;
-      glassTint: string;
-      glassBorder: string;
       buttonBackground: string;
       buttonBorder: string;
-      surfaceSoft: string;
+      buttonText: string;
+      accentSoft: string;
     };
   };
   value: string;
@@ -56,23 +52,33 @@ export function SettingsPreferenceControl({
   }
 
   return (
-    <GlassGroup spacing={12} style={styles.optionRow}>
+    <View style={styles.optionRow}>
       {options.map((option) => {
         const active = option.key === value;
         return (
-          <GlassSurface
+          <Pressable
             key={option.key}
-            colorScheme={themeName}
-            tintColor={tokens.colors.glassTint}
-            borderColor={active ? tokens.colors.buttonBorder : tokens.colors.glassBorder}
-            fallbackColor={active ? tokens.colors.buttonBackground : tokens.colors.surfaceSoft}
-            style={[styles.chipShell, active && styles.chipShellActive]}>
-            <Pressable onPress={() => onChange(option.key)} style={[styles.chip, active && styles.chipActive]}>
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>{option.label}</Text>
-            </Pressable>
-          </GlassSurface>
+            onPress={() => onChange(option.key)}
+            android_ripple={{ color: 'rgba(255,255,255,0.14)' }}
+            style={[
+              styles.chip,
+              {
+                backgroundColor: active ? tokens.colors.accentSoft : tokens.colors.buttonBackground,
+                borderColor: tokens.colors.buttonBorder,
+              },
+              active && styles.chipActive,
+            ]}>
+            <Text
+              style={[
+                styles.chipText,
+                { color: active ? tokens.colors.buttonText : tokens.colors.textSecondary },
+                active && styles.chipTextActive,
+              ]}>
+              {option.label}
+            </Text>
+          </Pressable>
         );
       })}
-    </GlassGroup>
+    </View>
   );
 }
