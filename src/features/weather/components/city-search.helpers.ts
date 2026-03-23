@@ -1,14 +1,21 @@
-import { presetCities } from '@/store/app-store';
-
 import type { City } from '@/features/weather/model/weather.types';
 
 import type { CityListItem } from './city-search.types';
 
 export function buildSuggestedCities(
-  selectedCity: City,
+  selectedCity: City | null,
   savedCities: City[],
   currentCityLabel: string,
 ): CityListItem[] {
+  if (!selectedCity) {
+    return savedCities.map((city) => ({
+      ...city,
+      subtitle: city.timezone,
+      kind: 'saved' as const,
+      canDelete: true,
+    }));
+  }
+
   const selectedCityIsSaved = savedCities.some((city) => city.id === selectedCity.id);
   const savedCityItems = savedCities
     .filter((city) => city.id !== selectedCity.id)
@@ -22,9 +29,6 @@ export function buildSuggestedCities(
       canDelete: selectedCityIsSaved,
     },
     ...savedCityItems,
-    ...presetCities
-      .filter((city) => city.id !== selectedCity.id && !savedCities.some((savedCity) => savedCity.id === city.id))
-      .map((city) => ({ ...city, subtitle: city.timezone, kind: 'preset' as const, canDelete: false })),
   ]);
 }
 

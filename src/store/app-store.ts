@@ -4,25 +4,10 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import type { City } from '@/features/weather/model/weather.types';
 
-export const presetCities: City[] = [
-  {
-    id: 'shanghai',
-    name: 'Shanghai',
-    latitude: 31.2304,
-    longitude: 121.4737,
-    timezone: 'Asia/Shanghai',
-  },
-  {
-    id: 'hangzhou',
-    name: 'Hangzhou',
-    latitude: 30.2741,
-    longitude: 120.1551,
-    timezone: 'Asia/Shanghai',
-  },
-];
+const LEGACY_PRESET_CITY_IDS = new Set(['shanghai', 'hangzhou']);
 
 type AppState = {
-  selectedCity: City;
+  selectedCity: City | null;
   savedCities: City[];
   hasResolvedInitialLocation: boolean;
   setSelectedCity: (city: City) => void;
@@ -30,29 +15,42 @@ type AppState = {
   markInitialLocationResolved: () => void;
 };
 
-function isPresetCity(city: City) {
-  return presetCities.some((presetCity) => presetCity.id === city.id);
+function isCurrentLocationCity(city: City) {
+  return city.id.startsWith('current-');
+}
+
+function isLegacyPresetCity(city: City | null | undefined) {
+  return Boolean(city && LEGACY_PRESET_CITY_IDS.has(city.id));
+}
+
+function sanitizeSavedCities(cities: City[]) {
+  return cities.filter((city) => !isLegacyPresetCity(city) && !isCurrentLocationCity(city));
+}
+
+function migrateSelectedCity(selectedCity: City | null | undefined, savedCities: City[]) {
+  if (!selectedCity || isLegacyPresetCity(selectedCity)) {
+    return savedCities[0] ?? null;
+  }
+  return selectedCity;
 }
 
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      selectedCity: presetCities[0],
+      selectedCity: null,
       savedCities: [],
       hasResolvedInitialLocation: false,
       setSelectedCity: (selectedCity) =>
         set((state) => ({
           selectedCity,
-          savedCities:
-            isPresetCity(selectedCity) || selectedCity.id.startsWith('current-')
-              ? state.savedCities
-              : [selectedCity, ...state.savedCities.filter((city) => city.id !== selectedCity.id)],
+          savedCities: isCurrentLocationCity(selectedCity)
+            ? state.savedCities
+            : [selectedCity, ...state.savedCities.filter((city) => city.id !== selectedCity.id)],
         })),
       removeSavedCity: (cityId) =>
         set((state) => {
           const nextSavedCities = state.savedCities.filter((city) => city.id !== cityId);
-          const selectedCity =
-            state.selectedCity.id === cityId ? nextSavedCities[0] ?? presetCities[0] : state.selectedCity;
+          const selectedCity = state.selectedCity?.id === cityId ? nextSavedCities[0] ?? null : state.selectedCity;
 
           return {
             savedCities: nextSavedCities,
@@ -63,11 +61,22 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'weather-app-state',
+      version: 2,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         selectedCity: state.selectedCity,
         savedCities: state.savedCities,
       }),
+      migrate: (persistedState) => {
+        const state = persistedState as Partial<AppState> | undefined;
+        const savedCities = sanitizeSavedCities(state?.savedCities ?? []);
+
+        return {
+          selectedCity: migrateSelectedCity(state?.selectedCity ?? null, savedCities),
+          savedCities,
+          hasResolvedInitialLocation: false,
+        };
+      },
     },
   ),
 );

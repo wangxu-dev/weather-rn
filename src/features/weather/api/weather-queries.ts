@@ -8,10 +8,11 @@ export const weatherQueryKeys = {
   citySearch: (query: string, locale: string) => ['weather', 'city-search', query, locale] as const,
 };
 
-export function useWeatherSnapshot(city: City) {
+export function useWeatherSnapshot(city: City | null) {
   return useQuery({
-    queryKey: weatherQueryKeys.snapshot(city),
-    queryFn: () => fetchWeatherSnapshot(city),
+    queryKey: city ? weatherQueryKeys.snapshot(city) : ['weather', 'snapshot', 'none'],
+    queryFn: () => fetchWeatherSnapshot(city!),
+    enabled: Boolean(city),
   });
 }
 

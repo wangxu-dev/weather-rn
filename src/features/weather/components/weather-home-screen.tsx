@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useBootstrapLocation } from '@/features/location/hooks/use-bootstrap-location';
@@ -17,12 +18,29 @@ import { WeatherHomeState } from './weather-home-state';
 
 export function WeatherHomeScreen() {
   const city = useAppStore((state) => state.selectedCity);
+  const hasResolvedInitialLocation = useAppStore((state) => state.hasResolvedInitialLocation);
   const weatherQuery = useWeatherSnapshot(city);
   const { t, locale } = useTranslation();
   const { tokens, themeName } = useAppTheme();
   const styles = createWeatherHomeStyles(tokens);
 
   useBootstrapLocation();
+
+  if (!city) {
+    return (
+      <WeatherBackdrop styles={styles} tokens={tokens}>
+        <SafeAreaView style={styles.safeArea}>
+          <WeatherHomeState
+            title={hasResolvedInitialLocation ? t('noLocationTitle') : t('locatingTitle')}
+            copy={hasResolvedInitialLocation ? t('noLocationCopy') : t('locatingCopy')}
+            actionLabel={t('search')}
+            onActionPress={() => router.navigate('/search')}
+            styles={styles}
+          />
+        </SafeAreaView>
+      </WeatherBackdrop>
+    );
+  }
 
   if (weatherQuery.isPending) {
     return (

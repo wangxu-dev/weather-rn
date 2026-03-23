@@ -65,7 +65,7 @@ export function CitySearchScreen() {
   }
 
   function handleLongPressDelete(city: CityListItem) {
-    if (city.kind !== 'saved') return;
+    if (!city.canDelete) return;
 
     Alert.alert(t('removeCity'), t('removeCityPrompt', { city: city.name }), [
       { text: t('cancel'), style: 'cancel' },

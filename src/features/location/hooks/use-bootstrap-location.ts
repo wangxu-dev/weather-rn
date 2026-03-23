@@ -62,7 +62,7 @@ export function useBootstrapLocation() {
           setSelectedCity(resolvedCity);
         }
       } catch {
-        // Keep the default city when location is unavailable.
+        // Leave selectedCity empty when location is unavailable.
       } finally {
         if (!cancelled) {
           markInitialLocationResolved();
